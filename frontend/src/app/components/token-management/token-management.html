@@ -1,0 +1,334 @@
+<div class="token-management">
+  <div class="container">
+    <!-- Header -->
+    <div class="page-header">
+      <h1>Gestión de Tokens</h1>
+      <p>Administra tus tokens Characato Coin</p>
+    </div>
+
+    <!-- Mensaje de estado -->
+    <div class="status-message" *ngIf="statusMessage" [ngClass]="'status-' + statusType">
+      {{ statusMessage }}
+    </div>
+
+    <!-- Información del Token -->
+    <div class="token-info-card" *ngIf="tokenInfo">
+      <h2>Información del Token</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Nombre:</label>
+          <span>{{ tokenInfo.name }}</span>
+        </div>
+        <div class="info-item">
+          <label>Símbolo:</label>
+          <span>{{ tokenInfo.symbol }}</span>
+        </div>
+        <div class="info-item">
+          <label>Supply Total:</label>
+          <span>{{ formatAmount(tokenInfo.totalSupply) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Supply Máximo:</label>
+          <span>{{ formatAmount(tokenInfo.maxSupply) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Total Minteado:</label>
+          <span>{{ formatAmount(tokenInfo.totalMinted) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Supply Restante:</label>
+          <span>{{ formatAmount(tokenInfo.remainingSupply) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span [ngClass]="tokenInfo.isPaused ? 'status-paused' : 'status-active'">
+            {{ tokenInfo.isPaused ? 'Pausado' : 'Activo' }}
+          </span>
+        </div>
+        <div class="info-item" *ngIf="userTokenInfo">
+          <label>Tu Balance:</label>
+          <span class="user-balance">{{ formatAmount(userTokenInfo.balance) }} CC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información del Usuario -->
+    <div class="user-info-card" *ngIf="userTokenInfo">
+      <h2>Tu Información</h2>
+      <div class="user-stats">
+        <div class="stat-item">
+          <div class="stat-value">{{ formatAmount(userTokenInfo.balance) }}</div>
+          <div class="stat-label">Tokens CC</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ userTokenInfo.isMinter ? 'Sí' : 'No' }}</div>
+          <div class="stat-label">Es Minter</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ formatAddress(walletInfo.address) }}</div>
+          <div class="stat-label">Dirección</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestañas de Acciones -->
+    <div class="actions-section" *ngIf="walletInfo.isConnected">
+      <div class="tabs">
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'transfer'"
+          (click)="setActiveTab('transfer')">
+          Transferir
+        </button>
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'approve'"
+          (click)="setActiveTab('approve')">
+          Aprobar
+        </button>
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'mint'"
+          [disabled]="!userTokenInfo?.isMinter"
+          (click)="setActiveTab('mint')">
+          Mintear
+        </button>
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'burn'"
+          (click)="setActiveTab('burn')">
+          Quemar
+        </button>
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'admin'"
+          [disabled]="!userTokenInfo?.isMinter"
+          (click)="setActiveTab('admin')">
+          Admin
+        </button>
+      </div>
+
+      <!-- Contenido de las pestañas -->
+      <div class="tab-content">
+
+        <!-- Transferir Tokens -->
+        <div class="tab-panel" *ngIf="activeTab === 'transfer'">
+          <h3>Transferir Tokens</h3>
+          <form class="action-form" (ngSubmit)="transfer()">
+            <div class="form-group">
+              <label for="transfer-to">Dirección de destino:</label>
+              <input 
+                type="text" 
+                id="transfer-to"
+                [(ngModel)]="transferForm.to"
+                name="transferTo"
+                placeholder="0x..."
+                required>
+            </div>
+            <div class="form-group">
+              <label for="transfer-amount">Cantidad:</label>
+              <input 
+                type="number" 
+                id="transfer-amount"
+                [(ngModel)]="transferForm.amount"
+                name="transferAmount"
+                placeholder="0.0"
+                step="0.0001"
+                min="0"
+                required>
+              <small>Balance disponible: {{ userTokenInfo ? formatAmount(userTokenInfo.balance) : '0' }} CC</small>
+            </div>
+            <button 
+              type="submit"
+              class="btn-primary"
+              [disabled]="loading || !transferForm.to || !transferForm.amount">
+              <span *ngIf="!loading">Transferir</span>
+              <span *ngIf="loading">Procesando...</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Aprobar Tokens -->
+        <div class="tab-panel" *ngIf="activeTab === 'approve'">
+          <h3>Aprobar Tokens</h3>
+          <form class="action-form" (ngSubmit)="approve()">
+            <div class="form-group">
+              <label for="approve-spender">Dirección autorizada:</label>
+              <input 
+                type="text" 
+                id="approve-spender"
+                [(ngModel)]="approveForm.spender"
+                name="approveSpender"
+                placeholder="0x..."
+                required>
+            </div>
+            <div class="form-group">
+              <label for="approve-amount">Cantidad:</label>
+              <input 
+                type="number" 
+                id="approve-amount"
+                [(ngModel)]="approveForm.amount"
+                name="approveAmount"
+                placeholder="0.0"
+                step="0.0001"
+                min="0"
+                required>
+              <small>Permite que otra dirección gaste tus tokens</small>
+            </div>
+            <button 
+              type="submit"
+              class="btn-primary"
+              [disabled]="loading || !approveForm.spender || !approveForm.amount">
+              <span *ngIf="!loading">Aprobar</span>
+              <span *ngIf="loading">Procesando...</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Mintear Tokens -->
+        <div class="tab-panel" *ngIf="activeTab === 'mint'">
+          <h3>Mintear Tokens</h3>
+          <div *ngIf="!userTokenInfo?.isMinter" class="access-denied">
+            <p>⚠️ No tienes permisos para mintear tokens.</p>
+          </div>
+          <form class="action-form" (ngSubmit)="mint()" *ngIf="userTokenInfo?.isMinter">
+            <div class="form-group">
+              <label for="mint-to">Dirección de destino:</label>
+              <input 
+                type="text" 
+                id="mint-to"
+                [(ngModel)]="mintForm.to"
+                name="mintTo"
+                placeholder="0x..."
+                required>
+            </div>
+            <div class="form-group">
+              <label for="mint-amount">Cantidad:</label>
+              <input 
+                type="number" 
+                id="mint-amount"
+                [(ngModel)]="mintForm.amount"
+                name="mintAmount"
+                placeholder="0.0"
+                step="0.0001"
+                min="0"
+                required>
+              <small>Supply restante: {{ tokenInfo ? formatAmount(tokenInfo.remainingSupply) : '0' }} CC</small>
+            </div>
+            <button 
+              type="submit"
+              class="btn-primary"
+              [disabled]="loading || !mintForm.to || !mintForm.amount">
+              <span *ngIf="!loading">Mintear</span>
+              <span *ngIf="loading">Procesando...</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Quemar Tokens -->
+        <div class="tab-panel" *ngIf="activeTab === 'burn'">
+          <h3>Quemar Tokens</h3>
+          <form class="action-form" (ngSubmit)="burn()">
+            <div class="form-group">
+              <label for="burn-amount">Cantidad a quemar:</label>
+              <input 
+                type="number" 
+                id="burn-amount"
+                [(ngModel)]="burnForm.amount"
+                name="burnAmount"
+                placeholder="0.0"
+                step="0.0001"
+                min="0"
+                required>
+              <small>Balance disponible: {{ userTokenInfo ? formatAmount(userTokenInfo.balance) : '0' }} CC</small>
+            </div>
+            <div class="warning-message">
+              ⚠️ Los tokens quemados se destruyen permanentemente y no se pueden recuperar.
+            </div>
+            <button 
+              type="submit"
+              class="btn-danger"
+              [disabled]="loading || !burnForm.amount">
+              <span *ngIf="!loading">Quemar Tokens</span>
+              <span *ngIf="loading">Procesando...</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Administración -->
+        <div class="tab-panel" *ngIf="activeTab === 'admin'">
+          <h3>Administración</h3>
+          <div *ngIf="!userTokenInfo?.isMinter" class="access-denied">
+            <p>⚠️ No tienes permisos de administrador.</p>
+          </div>
+          
+          <div *ngIf="userTokenInfo?.isMinter">
+            <!-- Gestión de Minters -->
+            <div class="admin-section">
+              <h4>Gestión de Minters</h4>
+              <form class="action-form" (ngSubmit)="manageMinter()">
+                <div class="form-group">
+                  <label for="minter-address">Dirección del Minter:</label>
+                  <input 
+                    type="text" 
+                    id="minter-address"
+                    [(ngModel)]="adminForm.minterAddress"
+                    name="minterAddress"
+                    placeholder="0x..."
+                    required>
+                </div>
+                <div class="form-group">
+                  <label for="minter-action">Acción:</label>
+                  <select 
+                    id="minter-action"
+                    [(ngModel)]="adminForm.action"
+                    name="minterAction"
+                    required>
+                    <option value="add">Añadir Minter</option>
+                    <option value="remove">Remover Minter</option>
+                  </select>
+                </div>
+                <button 
+                  type="submit"
+                  class="btn-primary"
+                  [disabled]="loading || !adminForm.minterAddress">
+                  <span *ngIf="!loading">{{ adminForm.action === 'add' ? 'Añadir' : 'Remover' }} Minter</span>
+                  <span *ngIf="loading">Procesando...</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Control de Pausa -->
+            <div class="admin-section">
+              <h4>Control de Contrato</h4>
+              <div class="pause-control">
+                <p>Estado actual: 
+                  <span [ngClass]="tokenInfo?.isPaused ? 'status-paused' : 'status-active'">
+                    {{ tokenInfo?.isPaused ? 'Pausado' : 'Activo' }}
+                  </span>
+                </p>
+                <button 
+                  class="btn-warning"
+                  [disabled]="loading"
+                  (click)="togglePause()">
+                  <span *ngIf="!loading">{{ tokenInfo?.isPaused ? 'Reanudar' : 'Pausar' }} Contrato</span>
+                  <span *ngIf="loading">Procesando...</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mensaje para conectar wallet -->
+    <div class="connect-wallet-message" *ngIf="!walletInfo.isConnected">
+      <div class="message-content">
+        <h2>Conecta tu Wallet</h2>
+        <p>Para gestionar tus tokens Characato Coin, necesitas conectar tu wallet.</p>
+      </div>
+    </div>
+
+  </div>
+</div>

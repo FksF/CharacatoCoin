@@ -1,0 +1,241 @@
+<div class="dashboard">
+  <div class="container">
+    <!-- Estado de conexión -->
+    <div class="connection-status" *ngIf="!walletInfo.isConnected">
+      <div class="status-card">
+        <h2>� Bienvenido a CharacatoCoin</h2>
+        <p>Conecta tu wallet MetaMask para acceder a todas las funcionalidades del ecosistema DeFi más innovador.</p>
+        <div class="features-list">
+          <div class="feature">✨ Staking con recompensas diarias</div>
+          <div class="feature">💎 Token ERC-20 seguro y auditado</div>
+          <div class="feature">🏦 Pool de recompensas de 10,000 CHCOIN</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard principal -->
+    <div class="dashboard-content" *ngIf="walletInfo.isConnected">
+      
+      <!-- Estadísticas principales -->
+      <div class="stats-grid">
+        
+        <!-- Información del Token -->
+        <div class="stat-card token-info">
+          <div class="card-header">
+            <h3>📊 Estado del Token</h3>
+            <button class="refresh-btn" (click)="refreshTokenInfo()" [disabled]="loading" title="Actualizar información">
+              🔄
+            </button>
+          </div>
+          
+          <div class="card-content" *ngIf="tokenInfo">
+            <div class="stat-item">
+              <span class="label">Token:</span>
+              <span class="value">{{ tokenInfo.name }} ({{ tokenInfo.symbol }})</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">Suministro Circulante:</span>
+              <span class="value">{{ formatAmount(tokenInfo.totalSupply) }} CHCOIN</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">Suministro Máximo:</span>
+              <span class="value">{{ formatAmount(tokenInfo.maxSupply) }} CHCOIN</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">Disponibles para Mintear:</span>
+              <span class="value">{{ formatAmount(tokenInfo.remainingSupply) }} CHCOIN</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">Estado del Contrato:</span>
+              <span class="value" [class]="tokenInfo.isPaused ? 'status-paused' : 'status-active'">
+                {{ tokenInfo.isPaused ? '⏸️ Pausado' : '✅ Activo' }}
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-label">Progreso del Suministro</div>
+              <div class="progress-track">
+                <div class="progress-fill" 
+                     [style.width.%]="(parseFloat(tokenInfo.totalSupply) / parseFloat(tokenInfo.maxSupply)) * 100"></div>
+              </div>
+              <div class="progress-text">
+                {{ ((parseFloat(tokenInfo.totalSupply) / parseFloat(tokenInfo.maxSupply)) * 100).toFixed(1) }}% completado
+              </div>
+            </div>
+          </div>
+
+          <div class="loading" *ngIf="!tokenInfo && loading">
+            <div class="loading-spinner"></div>
+            Cargando información del token...
+          </div>
+        </div>
+
+        <!-- Balance del Usuario -->
+        <div class="stat-card user-balance">
+          <div class="card-header">
+            <h3>💰 Tu Portafolio</h3>
+            <div class="balance-change">
+              <span class="change-indicator positive">+0.00%</span>
+            </div>
+          </div>
+          
+          <div class="card-content" *ngIf="userTokenInfo">
+            <div class="balance-display">
+              <div class="balance-amount">
+                {{ formatAmount(userTokenInfo.balance) }}
+              </div>
+              <div class="balance-symbol">CHCOIN</div>
+              <div class="balance-usd">≈ $0.00 USD</div>
+            </div>
+            
+            <div class="user-stats">
+              <div class="stat-item" *ngIf="userTokenInfo.isMinter">
+                <span class="minter-badge">👑 Admin Privilegios</span>
+              </div>
+              <div class="wallet-actions">
+                <button class="mini-btn send" routerLink="/token-management">
+                  <span>📤</span> Enviar
+                </button>
+                <button class="mini-btn stake" routerLink="/staking">
+                  <span>🏦</span> Stake
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de Staking -->
+        <div class="stat-card staking-info" *ngIf="stakingInfo">
+          <div class="card-header">
+            <h3>🏦 Pool de Staking Global</h3>
+            <div class="apy-badge">{{ calculateAPY() }}% APY</div>
+          </div>
+          
+          <div class="card-content">
+            <div class="staking-metrics">
+              <div class="metric-item featured">
+                <div class="metric-icon">🔒</div>
+                <div class="metric-info">
+                  <div class="metric-value">{{ formatAmount(stakingInfo.totalStaked) }}</div>
+                  <div class="metric-label">CHCOIN en Staking</div>
+                </div>
+              </div>
+              
+              <div class="metric-item">
+                <div class="metric-icon">🎁</div>
+                <div class="metric-info">
+                  <div class="metric-value">{{ formatAmount(stakingInfo.rewardPool) }}</div>
+                  <div class="metric-label">Pool de Recompensas</div>
+                </div>
+              </div>
+              
+              <div class="metric-item">
+                <div class="metric-icon">⚡</div>
+                <div class="metric-info">
+                  <div class="metric-value">{{ formatAmount(stakingInfo.minimumStakeAmount) }}</div>
+                  <div class="metric-label">Staking Mínimo</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="staking-stats">
+              <div class="stat-row">
+                <span class="label">Rendimiento Diario:</span>
+                <span class="value highlight">1.00%</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Período de Bloqueo:</span>
+                <span class="value">7 días</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Staking del Usuario -->
+        <div class="stat-card user-staking" *ngIf="userStakingInfo">
+          <div class="card-header">
+            <h3>🎯 Tu Staking</h3>
+          </div>
+          
+          <div class="card-content">
+            <div class="staking-amount">
+              <div class="amount">{{ formatAmount(userStakingInfo.stakedAmount) }}</div>
+              <div class="symbol">CHCOIN en Staking</div>
+            </div>
+            
+            <div class="stat-item">
+              <span class="label">Recompensas Pendientes:</span>
+              <span class="value rewards">{{ formatAmount(userStakingInfo.pendingReward) }} CHCOIN</span>
+            </div>
+            
+            <div class="stat-item" *ngIf="!userStakingInfo.canUnstake">
+              <span class="label">Tiempo para Desbloqueo:</span>
+              <span class="value">{{ formatTimeUntilUnlock(userStakingInfo.timeUntilUnlock) }}</span>
+            </div>
+            
+            <div class="staking-actions" *ngIf="parseFloat(userStakingInfo.stakedAmount) > 0">
+              <button class="claim-btn" (click)="claimRewards()" 
+                      [disabled]="parseFloat(userStakingInfo.pendingReward) === 0 || loading">
+                Reclamar Recompensas
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Acciones rápidas -->
+      <div class="quick-actions">
+        <h3>⚡ Acciones Rápidas</h3>
+        
+        <div class="actions-grid">
+          <button class="action-btn" routerLink="/token-management">
+            <div class="action-icon">💎</div>
+            <div class="action-title">Gestionar Tokens</div>
+            <div class="action-desc">Transferir, mintear y quemar tokens</div>
+          </button>
+
+          <button class="action-btn" routerLink="/staking">
+            <div class="action-icon">🏦</div>
+            <div class="action-title">Hacer Staking</div>
+            <div class="action-desc">Bloquea tokens y gana recompensas</div>
+          </button>
+
+          <button class="action-btn" (click)="refreshAllData()">
+            <div class="action-icon">🔄</div>
+            <div class="action-title">Actualizar Datos</div>
+            <div class="action-desc">Refrescar toda la información</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Información de la red -->
+      <div class="network-info-section" *ngIf="walletInfo.isConnected">
+        <h3>🌐 Información de Red</h3>
+        
+        <div class="network-details">
+          <div class="network-item">
+            <span class="label">Red Actual:</span>
+            <span class="value">{{ getNetworkName() }}</span>
+          </div>
+          <div class="network-item" *ngIf="contractAddresses.characatoCoin">
+            <span class="label">Contrato Token:</span>
+            <span class="value address">{{ formatAddress(contractAddresses.characatoCoin) }}</span>
+          </div>
+          <div class="network-item" *ngIf="contractAddresses.characatoStaking">
+            <span class="label">Contrato Staking:</span>
+            <span class="value address">{{ formatAddress(contractAddresses.characatoStaking) }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mensajes de estado -->
+    <div class="status-messages" *ngIf="statusMessage">
+      <div class="status-message" [class]="statusType">
+        {{ statusMessage }}
+      </div>
+    </div>
+
+  </div>
+</div>

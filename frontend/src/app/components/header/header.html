@@ -1,0 +1,69 @@
+<header class="header">
+  <div class="container">
+    <div class="header-content">
+      <!-- Logo y título -->
+      <div class="logo-section">
+        <img src="logo.png" alt="Characato Coin" width="50" height="50" class="logo-img">
+        <h1 class="title">Characato Coin</h1>
+      </div>
+
+      <!-- Navegación -->
+      <nav class="navigation">
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+        <a routerLink="/token-management" routerLinkActive="active" class="nav-link">Tokens</a>
+        <a routerLink="/staking" routerLinkActive="active" class="nav-link">Staking</a>
+      </nav>
+
+      <!-- Información de red y wallet -->
+      <div class="wallet-section">
+        <!-- Información de red -->
+        <div class="network-info" *ngIf="walletInfo.isConnected">
+          <span class="network-badge" [ngClass]="getNetworkClass()">
+            {{ getNetworkName() }}
+          </span>
+        </div>
+
+        <!-- Información de wallet -->
+        <div class="wallet-info" *ngIf="walletInfo.isConnected; else connectButton">
+          <div class="wallet-details">
+            <div class="wallet-address">
+              {{ formatAddress(walletInfo.address) }}
+            </div>
+            <div class="wallet-balance">
+              {{ formatBalance(walletInfo.balance) }} ETH
+            </div>
+          </div>
+          <button class="disconnect-btn" (click)="disconnectWallet()">
+            Desconectar
+          </button>
+        </div>
+
+        <!-- Botón de conexión -->
+        <ng-template #connectButton>
+          <button class="connect-btn" (click)="connectWallet()" [disabled]="isConnecting">
+            <span *ngIf="!isConnecting">Conectar Wallet</span>
+            <span *ngIf="isConnecting">Conectando...</span>
+          </button>
+        </ng-template>
+
+        <!-- Advertencia si MetaMask no está instalado -->
+        <div class="metamask-warning" *ngIf="!isMetaMaskInstalled">
+          <a href="https://metamask.io" target="_blank" class="install-metamask">
+            Instalar MetaMask
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner de advertencia para redes no soportadas -->
+    <div class="network-warning" *ngIf="walletInfo.isConnected && !isSupportedNetwork()">
+      <div class="warning-content">
+        <strong>⚠️ Red no soportada</strong>
+        <span>Por favor, cambie a Mainnet, Sepolia o red local para usar la aplicación.</span>
+        <button class="switch-network-btn" (click)="switchToSupportedNetwork()">
+          Cambiar Red
+        </button>
+      </div>
+    </div>
+  </div>
+</header>

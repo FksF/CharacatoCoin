@@ -1,0 +1,44 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployedAt": "2025-09-12T21:33:00.000Z",
+  "deployer": "0x0c3571aA29C4B7D87485bA0F8BE6920868539e9f",
+  "contracts": {
+    "CharacatoCoin": {
+      "address": "0x991bdf4132Fb68a7caA55d7240Cc02B29b268831",
+      "name": "Characato Coin",
+      "symbol": "CHCOIN",
+      "decimals": 18,
+      "initialSupply": "1000000000000000000000000",
+      "maxSupply": "10000000000000000000000000",
+      "verified": false
+    },
+    "CharacatoStaking": {
+      "address": "0xe1757AFA916B83B6115D9D386ff162b3cCfE1558",
+      "tokenAddress": "0x991bdf4132Fb68a7caA55d7240Cc02B29b268831",
+      "rewardRate": 100,
+      "minimumStakeAmount": "100000000000000000000",
+      "lockPeriod": 604800,
+      "initialRewardPool": "10000000000000000000000",
+      "verified": false
+    }
+  },
+  "etherscanUrls": {
+    "CharacatoCoin": "https://sepolia.etherscan.io/address/0x991bdf4132Fb68a7caA55d7240Cc02B29b268831",
+    "CharacatoStaking": "https://sepolia.etherscan.io/address/0xe1757AFA916B83B6115D9D386ff162b3cCfE1558"
+  },
+  "gasUsed": {
+    "CharacatoCoin": "~1,576,516",
+    "CharacatoStaking": "~1,145,069",
+    "totalEstimated": "~2,721,585"
+  },
+  "verificationCommands": {
+    "CharacatoCoin": "npx hardhat verify --network sepolia 0x991bdf4132Fb68a7caA55d7240Cc02B29b268831 \"0x0c3571aA29C4B7D87485bA0F8BE6920868539e9f\"",
+    "CharacatoStaking": "npx hardhat verify --network sepolia 0xe1757AFA916B83B6115D9D386ff162b3cCfE1558 \"0x991bdf4132Fb68a7caA55d7240Cc02B29b268831\" \"0x0c3571aA29C4B7D87485bA0F8BE6920868539e9f\""
+  },
+  "quickCommands": {
+    "query": "npm run query:sepolia",
+    "console": "npx hardhat console --network sepolia",
+    "verify": "npm run verify:sepolia"
+  }
+}

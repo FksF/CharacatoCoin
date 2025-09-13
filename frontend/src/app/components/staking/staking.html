@@ -1,0 +1,329 @@
+<div class="staking">
+  <div class="container">
+    
+    <!-- Estado de conexión -->
+    <div class="connection-status" *ngIf="!walletInfo.isConnected">
+      <div class="status-card">
+        <h2>🏦 Staking CharacatoCoin</h2>
+        <p>Conecta tu wallet para acceder al sistema de staking y comenzar a ganar recompensas diarias.</p>
+        <div class="benefits">
+          <div class="benefit">💰 365% APY</div>
+          <div class="benefit">📅 Recompensas diarias del 1%</div>
+          <div class="benefit">🔒 Período de bloqueo de 7 días</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="staking-content" *ngIf="walletInfo.isConnected">
+      
+      <!-- Header con información general -->
+      <div class="staking-header">
+        <h1>🏦 Staking CharacatoCoin</h1>
+        <p>Bloquea tus tokens CHCOIN y gana recompensas diarias del 1%</p>
+        
+        <div class="stats-overview">
+          <div class="overview-stat" *ngIf="stakingInfo">
+            <div class="stat-value">{{ calculateAPY() }}%</div>
+            <div class="stat-label">APY</div>
+          </div>
+          <div class="overview-stat" *ngIf="stakingInfo">
+            <div class="stat-value">{{ formatAmount(stakingInfo.totalStaked) }}</div>
+            <div class="stat-label">Total en Staking</div>
+          </div>
+          <div class="overview-stat" *ngIf="stakingInfo">
+            <div class="stat-value">{{ formatAmount(stakingInfo.rewardPool) }}</div>
+            <div class="stat-label">Pool de Recompensas</div>
+          </div>
+          <div class="overview-stat" *ngIf="userStakingInfo">
+            <div class="stat-value">{{ formatAmount(userStakingInfo.pendingReward) }}</div>
+            <div class="stat-label">Tus Recompensas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tu posición de staking -->
+      <div class="user-position" *ngIf="userStakingInfo && parseFloat(userStakingInfo.stakedAmount) > 0">
+        <div class="position-card">
+          <h3>📊 Tu Posición de Staking</h3>
+          
+          <div class="position-stats">
+            <div class="position-stat featured">
+              <div class="stat-icon">🔒</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ formatAmount(userStakingInfo.stakedAmount) }}</div>
+                <div class="stat-label">CHCOIN en Staking</div>
+              </div>
+            </div>
+            
+            <div class="position-stat">
+              <div class="stat-icon">🎁</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ formatAmount(userStakingInfo.pendingReward) }}</div>
+                <div class="stat-label">Recompensas Pendientes</div>
+              </div>
+            </div>
+            
+            <div class="position-stat" *ngIf="!userStakingInfo.canUnstake">
+              <div class="stat-icon">⏰</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ formatTimeUntilUnlock(userStakingInfo.timeUntilUnlock) }}</div>
+                <div class="stat-label">Tiempo para Desbloqueo</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="position-actions">
+            <button class="claim-rewards-btn" 
+                    [disabled]="parseFloat(userStakingInfo.pendingReward) === 0 || loading"
+                    (click)="claimRewards()">
+              <span *ngIf="!loading">🎁 Reclamar Recompensas</span>
+              <span *ngIf="loading">Procesando...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegación por pestañas -->
+      <div class="tab-navigation">
+        <button class="tab-button" 
+                [class.active]="activeTab === 'stake'"
+                (click)="setActiveTab('stake')">
+          🏦 Hacer Staking
+        </button>
+        <button class="tab-button" 
+                [class.active]="activeTab === 'unstake'"
+                [disabled]="!userStakingInfo || parseFloat(userStakingInfo.stakedAmount) === 0"
+                (click)="setActiveTab('unstake')">
+          📤 Retirar
+        </button>
+        <button class="tab-button" 
+                [class.active]="activeTab === 'admin'"
+                [disabled]="!userTokenInfo?.isMinter"
+                (click)="setActiveTab('admin')">
+          ⚙️ Admin
+        </button>
+      </div>
+
+      <!-- Contenido de las pestañas -->
+      <div class="tab-content">
+
+        <!-- Hacer Staking -->
+        <div class="tab-panel" *ngIf="activeTab === 'stake'">
+          <div class="action-card">
+            <h3>🏦 Hacer Staking</h3>
+            
+            <div class="staking-info">
+              <div class="info-item">
+                <span class="label">APY:</span>
+                <span class="value highlight">{{ calculateAPY() }}%</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Recompensa Diaria:</span>
+                <span class="value">1.00%</span>
+              </div>
+              <div class="info-item" *ngIf="stakingInfo">
+                <span class="label">Mínimo:</span>
+                <span class="value">{{ formatAmount(stakingInfo.minimumStakeAmount) }} CHCOIN</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Período de Bloqueo:</span>
+                <span class="value">7 días</span>
+              </div>
+            </div>
+
+            <form class="action-form" (ngSubmit)="stake()">
+              <div class="form-group">
+                <label for="stake-amount">Cantidad a hacer staking:</label>
+                <div class="input-group">
+                  <input type="number" 
+                         id="stake-amount"
+                         [(ngModel)]="stakeForm.amount"
+                         name="stakeAmount"
+                         placeholder="0.0"
+                         step="0.0001"
+                         min="0"
+                         required>
+                  <span class="input-suffix">CHCOIN</span>
+                </div>
+                <div class="balance-info" *ngIf="userTokenInfo">
+                  <span class="available">Disponible: {{ formatAmount(userTokenInfo.balance) }} CHCOIN</span>
+                  <button type="button" class="max-btn" (click)="stakeForm.amount = userTokenInfo.balance">
+                    MAX
+                  </button>
+                </div>
+              </div>
+
+              <div class="rewards-preview" *ngIf="stakeForm.amount && parseFloat(stakeForm.amount) > 0">
+                <h4>📊 Previsión de Recompensas</h4>
+                <div class="preview-stats">
+                  <div class="preview-stat">
+                    <span class="label">Recompensa Diaria:</span>
+                    <span class="value">{{ calculateDailyRewards(stakeForm.amount) }} CHCOIN</span>
+                  </div>
+                  <div class="preview-stat">
+                    <span class="label">Recompensa Mensual:</span>
+                    <span class="value">{{ formatAmount((parseFloat(calculateDailyRewards(stakeForm.amount)) * 30).toString()) }} CHCOIN</span>
+                  </div>
+                  <div class="preview-stat">
+                    <span class="label">Recompensa Anual:</span>
+                    <span class="value">{{ formatAmount((parseFloat(stakeForm.amount) * 3.65).toString()) }} CHCOIN</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" 
+                      class="btn-primary stake-btn"
+                      [disabled]="loading || !stakeForm.amount || !stakingInfo">
+                <span *ngIf="!loading">🏦 Hacer Staking</span>
+                <span *ngIf="loading">Procesando...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Retirar de Staking -->
+        <div class="tab-panel" *ngIf="activeTab === 'unstake'">
+          <div class="action-card">
+            <h3>📤 Retirar de Staking</h3>
+            
+            <div class="unstake-warning" *ngIf="userStakingInfo && !userStakingInfo.canUnstake">
+              <div class="warning-content">
+                <strong>⏰ Período de Bloqueo Activo</strong>
+                <p>Tus tokens están bloqueados por {{ formatTimeUntilUnlock(userStakingInfo.timeUntilUnlock) }} más.</p>
+                <p>Los tokens se pueden retirar después del período de bloqueo de 7 días.</p>
+              </div>
+            </div>
+
+            <form class="action-form" (ngSubmit)="unstake()" *ngIf="userStakingInfo?.canUnstake">
+              <div class="form-group">
+                <label for="unstake-amount">Cantidad a retirar:</label>
+                <div class="input-group">
+                  <input type="number" 
+                         id="unstake-amount"
+                         [(ngModel)]="unstakeForm.amount"
+                         name="unstakeAmount"
+                         placeholder="0.0"
+                         step="0.0001"
+                         min="0"
+                         required>
+                  <span class="input-suffix">CHCOIN</span>
+                </div>
+                <div class="balance-info" *ngIf="userStakingInfo">
+                  <span class="available">En Staking: {{ formatAmount(userStakingInfo.stakedAmount) }} CHCOIN</span>
+                  <button type="button" class="max-btn" (click)="unstakeForm.amount = userStakingInfo.stakedAmount">
+                    MAX
+                  </button>
+                </div>
+              </div>
+
+              <div class="unstake-notice">
+                <p><strong>💡 Nota:</strong> Al retirar tokens, perderás las recompensas futuras. Considera reclamar tus recompensas pendientes primero.</p>
+              </div>
+
+              <button type="submit" 
+                      class="btn-secondary unstake-btn"
+                      [disabled]="loading || !unstakeForm.amount">
+                <span *ngIf="!loading">📤 Retirar</span>
+                <span *ngIf="loading">Procesando...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Panel de Admin -->
+        <div class="tab-panel" *ngIf="activeTab === 'admin'">
+          <div class="action-card admin-panel">
+            <h3>⚙️ Panel de Administración</h3>
+            
+            <div class="admin-stats" *ngIf="stakingInfo">
+              <div class="admin-stat">
+                <span class="label">Estado:</span>
+                <span class="value" [class]="stakingInfo.isPaused ? 'status-paused' : 'status-active'">
+                  {{ stakingInfo.isPaused ? '⏸️ Pausado' : '▶️ Activo' }}
+                </span>
+              </div>
+              <div class="admin-stat">
+                <span class="label">Tasa de Recompensa:</span>
+                <span class="value">{{ stakingInfo.rewardRate }}% diario</span>
+              </div>
+            </div>
+
+            <div class="admin-actions">
+              
+              <!-- Pausar/Reanudar -->
+              <div class="admin-action">
+                <h4>{{ stakingInfo?.isPaused ? '▶️ Reanudar' : '⏸️ Pausar' }} Staking</h4>
+                <button class="btn-warning" (click)="toggleStakingPause()" [disabled]="loading">
+                  {{ stakingInfo?.isPaused ? 'Reanudar' : 'Pausar' }} Staking
+                </button>
+              </div>
+
+              <!-- Actualizar Tasa de Recompensas -->
+              <div class="admin-action">
+                <h4>📊 Actualizar Tasa de Recompensas</h4>
+                <div class="form-group">
+                  <input type="number" 
+                         [(ngModel)]="adminForm.rewardRate"
+                         placeholder="100 (para 1% diario)"
+                         min="0">
+                  <button class="btn-primary" (click)="updateRewardRate()" [disabled]="loading">
+                    Actualizar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Financiar Pool -->
+              <div class="admin-action">
+                <h4>💰 Financiar Pool de Recompensas</h4>
+                <div class="form-group">
+                  <input type="number" 
+                         [(ngModel)]="adminForm.fundAmount"
+                         placeholder="Cantidad en CHCOIN"
+                         min="0"
+                         step="0.0001">
+                  <button class="btn-primary" (click)="fundRewardPool()" [disabled]="loading">
+                    Financiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Información del contrato -->
+      <div class="contract-info" *ngIf="stakingInfo">
+        <h3>📋 Información del Contrato</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Total en Staking:</span>
+            <span class="value">{{ formatAmount(stakingInfo.totalStaked) }} CHCOIN</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Pool de Recompensas:</span>
+            <span class="value">{{ formatAmount(stakingInfo.rewardPool) }} CHCOIN</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Mínimo para Staking:</span>
+            <span class="value">{{ formatAmount(stakingInfo.minimumStakeAmount) }} CHCOIN</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Período de Bloqueo:</span>
+            <span class="value">{{ getLockPeriodInDays() }} días</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mensajes de estado -->
+    <div class="status-messages" *ngIf="statusMessage">
+      <div class="status-message" [class]="statusType">
+        {{ statusMessage }}
+      </div>
+    </div>
+
+  </div>
+</div>
