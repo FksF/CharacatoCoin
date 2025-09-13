@@ -39,7 +39,7 @@
 
 ### Clone and Install
 ```bash
-git clone https://github.com/[YOUR_USERNAME]/CharacatoCoin.git
+git clone https://github.com/FksF/CharacatoCoin.git
 cd CharacatoCoin
 npm install
 ```
@@ -145,7 +145,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 👨‍💻 Author
 
 **Fidel K. Salas Flores**
-- GitHub: [@fidelk](https://github.com/fidelk)
+- GitHub: [@FksF](https://github.com/FksF)
 
 ---
 
