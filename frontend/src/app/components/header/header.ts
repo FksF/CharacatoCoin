@@ -73,6 +73,39 @@ export class Header implements OnInit, OnDestroy {
   }
 
   /**
+   * Sincronizar cuenta con MetaMask
+   */
+  async syncAccount(): Promise<void> {
+    try {
+      await this.web3Service.forceAccountSync();
+    } catch (error: any) {
+      console.error('Error sincronizando cuenta:', error);
+      alert('Error sincronizando cuenta: ' + error.message);
+    }
+  }
+
+  /**
+   * Reset completo del servicio Web3 (para casos extremos)
+   */
+  async resetWeb3Service(): Promise<void> {
+    try {
+      await this.web3Service.fullReset();
+    } catch (error: any) {
+      console.error('Error reseteando servicio:', error);
+      alert('Error reseteando servicio: ' + error.message);
+    }
+  }
+
+  /**
+   * Mostrar información de debug (para desarrollo)
+   */
+  showDebugInfo(): void {
+    const debugInfo = this.web3Service.getDebugInfo();
+    console.table(debugInfo);
+    alert(`Debug Info:\n${JSON.stringify(debugInfo, null, 2)}`);
+  }
+
+  /**
    * Formatear dirección para mostrar
    */
   formatAddress(address: string): string {

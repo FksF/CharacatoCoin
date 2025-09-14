@@ -33,9 +33,24 @@
               {{ formatBalance(walletInfo.balance) }} ETH
             </div>
           </div>
-          <button class="disconnect-btn" (click)="disconnectWallet()">
-            Desconectar
-          </button>
+          <div class="wallet-actions">
+            <div class="sync-menu">
+              <button class="sync-btn" (click)="syncAccount()" title="Sincronizar cuenta con MetaMask">
+                🔄
+              </button>
+              <div class="sync-dropdown">
+                <button class="dropdown-item" (click)="resetWeb3Service()" title="Reset completo (usar solo si hay problemas)">
+                  🔧 Reset Completo
+                </button>
+                <button class="dropdown-item" (click)="showDebugInfo()" title="Mostrar información de debug">
+                  🐛 Debug Info
+                </button>
+              </div>
+            </div>
+            <button class="disconnect-btn" (click)="disconnectWallet()">
+              Desconectar
+            </button>
+          </div>
         </div>
 
         <!-- Botón de conexión -->
