@@ -25,6 +25,12 @@ export interface UserTokenInfo {
 })
 export class CharacatoCoinService {
   
+  // Direcciones de contratos por red
+  private readonly CONTRACT_ADDRESSES: { [key: number]: string } = {
+    1337: '0x5FbDB2315678afecb367f032d93F642f64180aa3', // Localhost
+    11155111: '0x991bdf4132Fb68a7caA55d7240Cc02B29b268831' // Sepolia
+  };
+  
   // ABI del contrato CharacatoCoin (versión simplificada)
   private readonly CONTRACT_ABI = [
     // Funciones de lectura
@@ -82,10 +88,23 @@ export class CharacatoCoinService {
   }
 
   /**
+   * Configurar chain ID y dirección del contrato
+   */
+  public setChainId(chainId: number): void {
+    const address = this.CONTRACT_ADDRESSES[chainId];
+    if (address) {
+      this.setContractAddress(address);
+    } else {
+      console.warn(`No hay dirección de contrato de token configurada para chainId: ${chainId}`);
+    }
+  }
+
+  /**
    * Configurar dirección del contrato
    */
   public setContractAddress(address: string): void {
-    this.contractAddress = address;
+    // Asegurar que la dirección tenga el checksum correcto
+    this.contractAddress = ethers.getAddress(address);
     if (this.web3Service.getProvider()) {
       this.initializeContract();
       this.loadTokenInfo();

@@ -65,6 +65,7 @@ export class TokenManagement implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupSubscriptions();
+    this.initializeContracts();
     this.loadData();
   }
 
@@ -78,8 +79,14 @@ export class TokenManagement implements OnInit, OnDestroy {
   private setupSubscriptions(): void {
     this.subscriptions.push(
       this.web3Service.walletInfo$.subscribe(walletInfo => {
+        const previousChainId = this.walletInfo.chainId;
         this.walletInfo = walletInfo;
-        if (walletInfo.isConnected) {
+        
+        // Si cambió la red o se conectó por primera vez, inicializar contratos
+        if (walletInfo.isConnected && (walletInfo.chainId !== previousChainId || previousChainId === 0)) {
+          this.initializeContracts();
+          this.loadData();
+        } else if (walletInfo.isConnected) {
           this.loadData();
         }
       })
@@ -96,6 +103,14 @@ export class TokenManagement implements OnInit, OnDestroy {
         this.userTokenInfo = userTokenInfo;
       })
     );
+  }
+
+  /**
+   * Inicializar contratos según la red activa
+   */
+  private initializeContracts(): void {
+    this.characatoCoinService.setChainId(this.walletInfo.chainId);
+    console.log('Contratos de token inicializados para chainId:', this.walletInfo.chainId);
   }
 
   /**

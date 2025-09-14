@@ -28,7 +28,7 @@ export class CharacatoStakingService {
   // Direcciones de contratos por red
   private readonly STAKING_CONTRACT_ADDRESSES: { [key: number]: string } = {
     1337: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512', // Localhost
-    11155111: '0xA0b86a33E6417c99B0Fe17d929Dbdc8e9C2b60B1' // Sepolia
+    11155111: '0xe1757AFA916B83B6115D9D386ff162b3cCfE1558' // Sepolia
   };
   
   // ABI del contrato CharacatoStaking (versión simplificada)
@@ -99,7 +99,8 @@ export class CharacatoStakingService {
    * Configurar dirección del contrato de staking
    */
   public setContractAddress(address: string): void {
-    this.contractAddress = address;
+    // Asegurar que la dirección tenga el checksum correcto
+    this.contractAddress = ethers.getAddress(address);
     if (this.web3Service.getProvider()) {
       this.initializeContract();
       this.loadStakingInfo();

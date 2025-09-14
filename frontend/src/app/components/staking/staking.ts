@@ -121,6 +121,7 @@ export class Staking implements OnInit, OnDestroy {
    * Inicializar contratos según la red activa
    */
   private initializeContracts(): void {
+    this.characatoCoinService.setChainId(this.walletInfo.chainId);
     this.stakingService.setChainId(this.walletInfo.chainId);
     console.log('Contratos inicializados para chainId:', this.walletInfo.chainId);
   }
